@@ -1,0 +1,193 @@
+openapi: '3.0.3'
+info:
+  title: snacks-manager
+  version: '1.0'
+servers:
+  - url: https://api.server.test/v1
+
+paths:
+  /test:
+    get:
+      responses:
+        '200':
+          description: OK
+  /snacks:
+    get:
+      responses:
+        '200':
+          description: get list of known snacks
+          content:
+            application/json:
+              schema:  
+                type: array
+                items:
+                  $ref: '#/components/schemas/SnackShortInfo'
+  /snacks/{snackId}:
+    get:
+      summary: get information for specific snacks
+      parameters:
+        - name: snackId
+          in: path
+          description: UUID identifier of the snack you want more information on.
+          required: true
+          schema:
+            type: string
+            format: UUID
+      responses:
+        '200':
+          description: Information on snack
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SnackShortInfo' 
+  /purchase/order:
+    post:
+      tags:
+        - customer
+      description: Place an order for one or more of a type of snack
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PurchaseRequest'
+      responses:
+        '200':
+          description: transaction will be processed.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PurchaseResponse'
+  /purchase/process/{orderId}:
+    post:
+      tags:
+        - clerk
+      parameters:
+        - name: orderId
+          in: path
+          description: UUID identifier of the order the clerk is processing.
+          required: true
+          schema:
+            type: string
+            format: UUID
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProcessingResponse'
+              
+  /purchase/acknowledge:
+    post:
+      tags:
+        - customer
+      description: the customer has received all items of their order.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AllItemsReceived'
+      responses:
+        '200':
+          description: OK
+
+components:
+  schemas:
+    UserInfo:
+      type: object
+      properties:
+        name:
+          type: string
+        id:
+          type: string
+          format: UUID
+    SnackShortInfo:
+      type: object
+      properties:
+        name:
+          type: string
+        price:
+          type: number
+        id: 
+          type: string
+          format: UUID
+      required:
+        - name
+        - price
+        - id
+    PurchaseRequest:
+      description: Information on a single purchase. One type of item may be purchased with a single request.
+      type: object
+      properties:
+        itemId:
+          type: string
+          format: UUID
+        customerId:
+          type: string
+          format: UUID
+        count:
+          type: integer
+      required:
+        - itemId
+        - count
+        - customerId
+    PurchaseResponse:
+      description: |-
+        Response for purchase request. It will assign an orderId, so that the customer can 
+        identify the order, as none of the calls are blocking. In addition this response will 
+        provide a Purchase Transaction Nonce, to be used by the customer for acknowledging that the
+        items where received by the them.
+      type: object
+      properties:
+        itemId:
+          type: string
+          format: UUID
+        customerId:
+          type: string
+          format: UUID
+        count:
+          type: integer
+        orderId:
+          description: Identifier, so that customer and clerk can identify purchase orders.
+          type: string
+        TransactionNonce:
+          description: Nonce, so that customer can identify purchase orders.
+          type: string
+    ProcessingResponse:
+      description: Information for Clerk to identity correct customer and what snacks to hand out.
+      type: object
+      properties:
+        orderId:
+          description: Id of the order being processed
+          type: string
+          format: UUID
+        itemId:
+          description: Item to hand out
+          type: string
+          format: UUID
+        count:
+          type: integer
+        customerId:
+          type: string
+          format: UUID
+      required:
+        - orderId
+        - itemId
+        - count
+        - customerId
+    AllItemsReceived:
+      type: object
+      properties:
+        customerId:
+          type: string
+          format: UUID
+        orderId:
+          type: string
+          format: UUID
+        transactionNonce:
+          description: Nonce, so that customer can identify purchase orders.
+          type: string
+      required:
+        - transactionNonce
+        - orderId
+        - customerId
+        

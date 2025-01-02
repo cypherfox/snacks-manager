@@ -1,4 +1,4 @@
-# snickers-manager
+# snacks-manager
 
 This is a demonstration app for cloud native methods and tooling. It is structured as a simple micro-service application for managing a snacks supply.
 
