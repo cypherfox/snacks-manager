@@ -11,10 +11,10 @@ import (
 
 const (
 	HEADER_KEY_AUTH_USER = "X-Snackmgr-Authenticated-User"
+	OWNER_KEY            = "owner"
 )
 
 type ApiServer struct {
-	model *model.DataModel
 }
 
 var _ StrictServerInterface = (*ApiServer)(nil)
@@ -50,16 +50,44 @@ func ProcessAuthHeader(f StrictHandlerFunc, _ string) StrictHandlerFunc {
 	}
 }
 
-func NewApiHandler(m *model.EnterpriseModel) ServerInterface {
-	server := NewApiServer(m)
+func NewApiHandler() ServerInterface {
+	server := NewApiServer()
 	handler := NewStrictHandler(server,
 		[]strictnethttp.StrictHTTPMiddlewareFunc{ProcessAuthHeader})
 
 	return handler
 }
 
-func NewApiServer(m *model.EnterpriseModel) *ApiServer {
-	return &ApiServer{
-		model: m,
-	}
+func NewApiServer() *ApiServer {
+	return &ApiServer{}
+}
+
+// GetSnacks implements StrictServerInterface.
+func (a *ApiServer) GetSnacks(ctx context.Context, request GetSnacksRequestObject) (GetSnacksResponseObject, error) {
+	panic("unimplemented")
+}
+
+// GetSnacksSnackId implements StrictServerInterface.
+func (a *ApiServer) GetSnacksSnackId(ctx context.Context, request GetSnacksSnackIdRequestObject) (GetSnacksSnackIdResponseObject, error) {
+	panic("unimplemented")
+}
+
+// GetTest implements StrictServerInterface.
+func (a *ApiServer) GetTest(ctx context.Context, request GetTestRequestObject) (GetTestResponseObject, error) {
+	panic("unimplemented")
+}
+
+// PostPurchaseAcknowledge implements StrictServerInterface.
+func (a *ApiServer) PostPurchaseAcknowledge(ctx context.Context, request PostPurchaseAcknowledgeRequestObject) (PostPurchaseAcknowledgeResponseObject, error) {
+	panic("unimplemented")
+}
+
+// PostPurchaseOrder implements StrictServerInterface.
+func (a *ApiServer) PostPurchaseOrder(ctx context.Context, request PostPurchaseOrderRequestObject) (PostPurchaseOrderResponseObject, error) {
+	panic("unimplemented")
+}
+
+// PostPurchaseProcessOrderId implements StrictServerInterface.
+func (a *ApiServer) PostPurchaseProcessOrderId(ctx context.Context, request PostPurchaseProcessOrderIdRequestObject) (PostPurchaseProcessOrderIdResponseObject, error) {
+	panic("unimplemented")
 }
