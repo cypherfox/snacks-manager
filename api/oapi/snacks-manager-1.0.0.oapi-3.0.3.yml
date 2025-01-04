@@ -22,6 +22,26 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/SnackShortInfo'
+    post:
+      tags:
+        - manager
+      description: create a new snack type. The itemId must be the null UUID!
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SnackShortInfo'
+      responses:
+        '200':
+          description: return the completed information about the item
+          content:
+            application/json:
+              schema:  
+                type: array
+                items:
+                  $ref: '#/components/schemas/SnackShortInfo'
+
+      
   /snacks/{snackId}:
     get:
       summary: get information for specific snacks
@@ -40,6 +60,32 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/SnackShortInfo' 
+    put:
+      tags:
+        - manager
+      description: update information on an item.
+      parameters:
+        - name: snackId
+          in: path
+          description: UUID identifier of the snack you want more information on.
+          required: true
+          schema:
+            type: string
+            format: UUID
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SnackShortInfo'
+      responses:
+        '200':
+          description: return the completed information about the item
+          content:
+            application/json:
+              schema:  
+                type: array
+                items:
+                  $ref: '#/components/schemas/SnackShortInfo'
   /purchase/order:
     post:
       tags:
@@ -57,6 +103,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/PurchaseResponse'
+        '400':
+          description: Bad request, potentially due to malformed json, or invalid UUIDs
+          content:
+            application/json:
+              schema:
+                type: string
   /purchase/process/{orderId}:
     post:
       tags:
@@ -71,6 +123,7 @@ paths:
             format: UUID
       responses:
         '200':
+          description: ok
           content:
             application/json:
               schema:
@@ -133,9 +186,7 @@ components:
     PurchaseResponse:
       description: |-
         Response for purchase request. It will assign an orderId, so that the customer can 
-        identify the order, as none of the calls are blocking. In addition this response will 
-        provide a Purchase Transaction Nonce, to be used by the customer for acknowledging that the
-        items where received by the them.
+        identify the order, as none of the calls are blocking.
       type: object
       properties:
         itemId:
@@ -149,9 +200,12 @@ components:
         orderId:
           description: Identifier, so that customer and clerk can identify purchase orders.
           type: string
-        TransactionNonce:
-          description: Nonce, so that customer can identify purchase orders.
-          type: string
+          format: UUID
+      required:
+        - itemId
+        - customerId
+        - count
+        - orderId
     ProcessingResponse:
       description: Information for Clerk to identity correct customer and what snacks to hand out.
       type: object
@@ -183,11 +237,7 @@ components:
         orderId:
           type: string
           format: UUID
-        transactionNonce:
-          description: Nonce, so that customer can identify purchase orders.
-          type: string
       required:
-        - transactionNonce
         - orderId
         - customerId
         

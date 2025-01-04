@@ -6,15 +6,21 @@ import (
 	"context"
 	"net/http"
 
+	"github.com/cypherfox/snacks-manager/internal/backend"
+	"github.com/google/uuid"
 	strictnethttp "github.com/oapi-codegen/runtime/strictmiddleware/nethttp"
 )
 
+type ContextLabel string
+type HeaderLabel string
+
 const (
-	HEADER_KEY_AUTH_USER = "X-Snackmgr-Authenticated-User"
-	OWNER_KEY            = "owner"
+	HEADER_KEY_AUTH_USER              = "X-Snackmgr-Authenticated-User"
+	OWNER_KEY            ContextLabel = "owner"
 )
 
 type ApiServer struct {
+	Backend *backend.SnackBackEnd
 }
 
 var _ StrictServerInterface = (*ApiServer)(nil)
@@ -50,16 +56,18 @@ func ProcessAuthHeader(f StrictHandlerFunc, _ string) StrictHandlerFunc {
 	}
 }
 
-func NewApiHandler() ServerInterface {
-	server := NewApiServer()
+func NewApiHandler(backend *backend.SnackBackEnd) ServerInterface {
+	server := NewApiServer(backend)
 	handler := NewStrictHandler(server,
 		[]strictnethttp.StrictHTTPMiddlewareFunc{ProcessAuthHeader})
 
 	return handler
 }
 
-func NewApiServer() *ApiServer {
-	return &ApiServer{}
+func NewApiServer(backend *backend.SnackBackEnd) *ApiServer {
+	return &ApiServer{
+		Backend: backend,
+	}
 }
 
 // GetSnacks implements StrictServerInterface.
@@ -84,7 +92,28 @@ func (a *ApiServer) PostPurchaseAcknowledge(ctx context.Context, request PostPur
 
 // PostPurchaseOrder implements StrictServerInterface.
 func (a *ApiServer) PostPurchaseOrder(ctx context.Context, request PostPurchaseOrderRequestObject) (PostPurchaseOrderResponseObject, error) {
-	panic("unimplemented")
+	customerId, err := uuid.Parse(request.Body.CustomerId)
+	if err != nil {
+		return PostPurchaseOrder400JSONResponse("UUID for customerId is malformed"), err
+	}
+
+	itemId, err := uuid.Parse(request.Body.ItemId)
+	if err != nil {
+		return PostPurchaseOrder400JSONResponse("UUID for itemId is malformed"), err
+	}
+
+	count := request.Body.Count
+
+	orderId := a.Backend.AddOrder(customerId, itemId, count)
+
+	response := PurchaseResponse{
+		Count:      count,
+		CustomerId: customerId.String(),
+		ItemId:     itemId.String(),
+		OrderId:    orderId.String(),
+	}
+
+	return PostPurchaseOrder200JSONResponse(response), nil
 }
 
 // PostPurchaseProcessOrderId implements StrictServerInterface.

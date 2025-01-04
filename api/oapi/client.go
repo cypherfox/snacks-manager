@@ -6,6 +6,8 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+
+	"github.com/google/uuid"
 )
 
 type SnackMgrClient struct {
@@ -29,11 +31,33 @@ func NewSnackMgrClient(url string) (*SnackMgrClient, error) {
 	return ret, nil
 }
 
+func (c *SnackMgrClient) PurchaseOrder(customerId uuid.UUID, itemId uuid.UUID, count int) (uuid.UUID, error) {
+	order := PurchaseRequest{
+		ItemId:     itemId.String(),
+		CustomerId: customerId.String(),
+		Count:      count,
+	}
+
+	resp, err := c.oapi_client.PostPurchaseOrderWithResponse(context.TODO(), order)
+	if err != nil {
+		return uuid.Nil, err
+	}
+
+	if resp.StatusCode() != http.StatusOK {
+		return uuid.Nil, fmt.Errorf("expected HTTP 200 but received %d", resp.StatusCode())
+	}
+
+	orderId, err := uuid.Parse(resp.JSON200.OrderId)
+	if err != nil {
+		return uuid.Nil, err
+	}
+	return orderId, nil
+}
+
 func (c *SnackMgrClient) PurchaseAcknowledge(customerId string, orderId string, transactionNonce string) error {
 	received := AllItemsReceived{
 		customerId,
 		orderId,
-		transactionNonce,
 	}
 
 	resp, err := c.oapi_client.PostPurchaseAcknowledgeWithResponse(context.TODO(), received, nil)
@@ -42,7 +66,7 @@ func (c *SnackMgrClient) PurchaseAcknowledge(customerId string, orderId string, 
 	}
 
 	if resp.StatusCode() != http.StatusOK {
-		fmt.Errorf("Expected HTTP 200 but received %d", resp.StatusCode())
+		return fmt.Errorf("expected HTTP 200 but received %d", resp.StatusCode())
 	}
 
 	// no response to parse, or the response code would have been != 200

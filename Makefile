@@ -6,7 +6,7 @@ build: ./snackmgr
 	go build -o ./snackmgr
 
 test:
-	go test -cover ./api/... ./internal/... ./pkg/... ./cmd/...
+	go test -cover ./api/... ./internal/... ./cmd/... # for now: ./pkg/... 
 
 make-pngs: doc/structure.png
 

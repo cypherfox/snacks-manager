@@ -6,7 +6,11 @@ package cmd
 
 import (
 	"fmt"
+	"net/http"
 
+	"github.com/cypherfox/snacks-manager/api/oapi"
+	"github.com/cypherfox/snacks-manager/internal/backend"
+	"github.com/gorilla/mux"
 	"github.com/spf13/cobra"
 )
 
@@ -21,8 +25,37 @@ Cobra is a CLI library for Go that empowers applications.
 This application is a tool to generate the needed files
 to quickly create a Cobra application.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("backend called")
+		serverAddr := "0.0.0.0:24771"
+
+		runListener(serverAddr)
 	},
+}
+
+func runListener(addr string) {
+
+	backend := backend.NewSnackBackEnd()
+
+	strict := oapi.NewApiHandler(backend)
+
+	r := mux.NewRouter()
+
+	// get an `http.Handler` that we can use
+	h := oapi.HandlerFromMuxWithBaseURL(strict, r, "")
+
+	fmt.Printf("starting server and listening on port %s", addr)
+
+	s := &http.Server{
+		Handler: h,
+		Addr:    addr,
+	}
+
+	err := s.ListenAndServe()
+	fmt.Printf("\n ended server \n")
+	if err != nil {
+		if err != nil {
+			fmt.Printf("with error: %s", err.Error())
+		}
+	}
 }
 
 func init() {
